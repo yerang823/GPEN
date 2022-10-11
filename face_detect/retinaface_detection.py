@@ -34,7 +34,7 @@ class RetinaFaceDetection(object):
         model_keys = set(self.net.state_dict().keys())
         used_pretrained_keys = model_keys & ckpt_keys
         unused_pretrained_keys = ckpt_keys - model_keys
-        missing_keys = model_keys - ckpt_keys
+        missing_keys = model_keys - ckpt_keys 
         assert len(used_pretrained_keys) > 0, 'load NONE from pretrained checkpoint'
         return True
 

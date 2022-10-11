@@ -3,7 +3,7 @@
 @author: yangxy (yangtao9009@gmail.com)
 '''
 import cv2
-import time
+import time, math
 import numpy as np
 import __init_paths
 from face_detect.retinaface_detection import RetinaFaceDetection
@@ -51,7 +51,7 @@ class FaceEnhancement(object):
     def process(self, img, aligned=False):
         orig_faces, enhanced_faces = [], []
         if aligned:
-            ef = self.facegan.process(img)
+            ef = self.facegan.process(img)            
             orig_faces.append(img)
             enhanced_faces.append(ef)
 
@@ -61,11 +61,33 @@ class FaceEnhancement(object):
             return ef, orig_faces, enhanced_faces
 
         if self.use_sr:
+            
+            print('srmodel ==============')
+            start = time.time()
+            math.factorial(100000)
+            
+            
             img_sr = self.srmodel.process(img)
+            
+            end = time.time()
+            print('===========================================')
+            print(f"{end - start:.5f} sec")
+            print('===========================================')
+            
             if img_sr is not None:
                 img = cv2.resize(img, img_sr.shape[:2][::-1])
 
+        print('facedetector ==============')
+        start = time.time()
+        math.factorial(100000)
+        
         facebs, landms = self.facedetector.detect(img)
+        
+        end = time.time()
+        print('===========================================')
+        print(f"{end - start:.5f} sec")
+        print('===========================================')
+        
         
         height, width = img.shape[:2]
         full_mask = np.zeros((height, width), dtype=np.float32)
@@ -80,7 +102,18 @@ class FaceEnhancement(object):
             of, tfm_inv = warp_and_crop_face(img, facial5points, reference_pts=self.reference_5pts, crop_size=(self.in_size, self.in_size))
             
             # enhance the face
+            
+            print('facegan ==============')
+            start = time.time()
+            math.factorial(100000)
+            
+            
             ef = self.facegan.process(of)
+            
+            end = time.time()
+            print('===========================================')
+            print(f"{end - start:.5f} sec")
+            print('===========================================')
             
             orig_faces.append(of)
             enhanced_faces.append(ef)
@@ -108,5 +141,3 @@ class FaceEnhancement(object):
             img = cv2.convertScaleAbs(img*(1-full_mask) + full_img*full_mask)
 
         return img, orig_faces, enhanced_faces
-        
-        

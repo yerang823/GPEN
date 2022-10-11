@@ -112,12 +112,67 @@ class RealESRNet(object):
                 w_pad = (mod_scale - w % mod_scale)
             img = F.pad(img, (0, w_pad, 0, h_pad), 'reflect')
 
-        try:
+        try:            
             with torch.no_grad():
                 if self.tile_size > 0:
                     output = self.tile_process(img)
                 else:
+                    #img = np.concatenate((img.cpu(),img.cpu()))
+                    #img = torch.from_numpy(img).cuda()
+                    print('img shape ========', img.shape)
+                    
                     output = self.srmodel(img)
+                    
+                    print('output shape ========', output.shape)
+            del img
+            # remove extra pad
+            if mod_scale is not None:
+                _, _, h, w = output.size()
+                output = output[:, :, 0:h - h_pad, 0:w - w_pad]
+            output = output.data.squeeze().float().cpu().clamp_(0, 1).numpy()
+            output = np.transpose(output[[2, 1, 0], :, :], (1, 2, 0))
+            output = (output * 255.0).round().astype(np.uint8)
+
+            return output
+        except Exception as e:
+            print('sr failed:', e)
+            return None
+        
+        
+        
+        
+    def process_imgs(self, img):
+        img = img.astype(np.float32) / 255.
+        img = torch.from_numpy(np.transpose(img[:, :, [2, 1, 0]], (2, 0, 1))).float()
+        img = img.unsqueeze(0).to(self.device)
+
+        if self.scale == 2:
+            mod_scale = 2
+        elif self.scale == 1:
+            mod_scale = 4
+        else:
+            mod_scale = None
+        if mod_scale is not None:
+            h_pad, w_pad = 0, 0
+            _, _, h, w = img.size()
+            if (h % mod_scale != 0):
+                h_pad = (mod_scale - h % mod_scale)
+            if (w % mod_scale != 0):
+                w_pad = (mod_scale - w % mod_scale)
+            img = F.pad(img, (0, w_pad, 0, h_pad), 'reflect')
+
+        try:            
+            with torch.no_grad():
+                if self.tile_size > 0:
+                    output = self.tile_process(img)
+                else:
+                    #img = np.concatenate((img.cpu(),img.cpu()))
+                    #img = torch.from_numpy(img).cuda()
+                    print('img shape ========', img.shape)
+                    
+                    output = self.srmodel(img)
+                    
+                    print('output shape ========', output.shape)
             del img
             # remove extra pad
             if mod_scale is not None:
