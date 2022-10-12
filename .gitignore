@@ -135,3 +135,4 @@ example/
 sr_output/
 figs/
 weights/
+training/lpips/
